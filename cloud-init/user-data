@@ -1,0 +1,125 @@
+#cloud-config
+
+# Set hostname of the vm 
+hostname: cs162-student-vm
+# Configure default user with password - pintos (hashed exactly the same as /etc/shadow), allow password logins and configure sudo
+users:
+    - name: cs162-student
+      shell: /bin/bash
+      passwd: $6$6vDkB1TQQ1cv4bk7$a/P5HMtOPrflAahJq60rheWKQrf9k7k5ZVwCgyCNlQka2u8q5RfQLjtWaZe0uNayL2WXLdiWlRxr9me3FOBRI1
+      lock_passwd: false
+      sudo:
+        - 'ALL=(ALL) ALL'
+
+# Allow password auth in ssh - Ubuntu has made this default to False for security reasons
+ssh_pwauth: True
+
+# Set timezone
+timezone: America/Los_Angeles
+
+# Get all package updates and install them, saving time for the students
+package_update: true
+package_upgrade: true
+
+# Install custom apt packages
+packages:
+    - autoconf
+    - binutils
+    - clang
+    - clang-format
+    - cmake
+    - cgdb
+    - curl
+    - exuberant-ctags
+    - g++
+    - gcc
+    - gdb
+    - git
+    - golang
+    - libx11-6
+    - libx11-dev
+    - libxrandr-dev
+    - libxrandr2
+    - man-db
+    - python3
+    - python3-pip
+    - qemu-system-x86
+    - rust-all
+    - samba
+    - silversearcher-ag
+    - tmux
+    - valgrind
+    - vim
+    - wget
+
+runcmd:
+    
+    # Install pip packages
+    - pip3 install grpcio grpcio-tools jupyter matplotlib numpy
+    
+    # Copy over config files 
+    - >
+     git clone --depth=1 https://github.com/nicholasngai/student-vm /run/temp
+    - rm -rf /home/cs162-student
+    - cp -r /run/temp/slash/home/cs162-student/ /home/cs162-student
+    - >
+     chown -R cs162-student:cs162-student /home/cs162-student
+    - cp /run/temp/slash/etc/samba/smb.conf /etc/samba/smb.conf
+    - rm -rf /run/temp
+
+    # Configure samba password to vagrant
+    - >
+     printf '%s\n%s\n' "pintos" "pintos" | smbpasswd -a "cs162-student"
+
+    # Enable samba
+    - systemctl enable smbd
+
+    # Download and install bochs v2.6.7
+    - >
+     curl -L -o /usr/local/src/bochs-2.6.7.tar.gz
+     https://downloads.sourceforge.net/project/bochs/bochs/2.6.7/bochs-2.6.7.tar.gz
+    - tar -C /usr/local/src -xzvf /usr/local/src/bochs-2.6.7.tar.gz
+    - >
+     sh -c "
+     cd /usr/local/src/bochs-2.6.7 
+     && ./configure 
+     --enable-gdb-stub 
+     --with-x 
+     --with-x11 
+     --with-term 
+     --with-nogui
+     && make install 
+     "
+    
+    # Clone and build fzf
+    - >
+     git clone -b 0.25.0 --depth=1 https://github.com/junegunn/fzf.git /home/cs162-student/.fzf
+    - >
+     chown -R cs162-student:cs162-student /home/cs162-student/.fzf
+    - >
+     su -l -c '~/.fzf/install --no-update-rc --no-completion --key-bindings' cs162-student
+
+    # Clone code  reops
+    - mkdir /home/cs162-student/code
+    - >
+     git clone -o staff https://github.com/Berkeley-CS162/group0.git /home/cs162-student/code/group
+    - >
+     git clone -o staff https://github.com/Berkeley-CS162/student0.git /home/cs162-student/code/personal
+    - >
+     chown -R cs162-student:cs162-student /home/cs162-student/code
+
+    # Just getting rid of annoying warnings about the floppy interface - not sure why the warning is thrown
+    - >
+     echo "blacklist floppy" | tee /etc/modprobe.d/blacklist-floppy.conf
+    - rmmod floppy
+    - update-initramfs -u
+
+    # Disable subsequent tries to run cloud-init after initial boot
+    - touch /etc/cloud/cloud-init.disabled
+
+# Poweroff VM cleanly if possible after completion but kill process in 10 mins - can be adjusted later
+power_state:
+    mode: poweroff
+    message: Shutting Down
+    timeout: 1000
+    condition: True

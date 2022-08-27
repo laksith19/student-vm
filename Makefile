@@ -1,6 +1,7 @@
 OUT_DIR = out
 IMAGE_FILE_QCOW2 = $(OUT_DIR)/cs162-student-vm.qcow2
 IMAGE_FILE_OVA = $(OUT_DIR)/cs162-student-vm.ova
+SEED_FILE = $(OUT_DIR)/seed.iso
 
 DOCKER_IMAGE_NAME = cs162-student-vm
 DOCKER_CONTAINER_NAME = cs162-student-vm
@@ -21,6 +22,10 @@ $(IMAGE_FILE_QCOW2): $(OUT_DIR) dockerstart
 # Copy the OVA image from the docker container to the filesystem.
 $(IMAGE_FILE_OVA): $(OUT_DIR) dockerstart
 	docker cp $(DOCKER_CONTAINER_NAME):/cs162-student-vm/cs162-student-vm.ova $(IMAGE_FILE_OVA)
+	
+# Copy the config seed.iso from the docker container to the filesystem.
+$(SEED_FILE): $(OUT_DIR) dockerstart
+	docker cp $(DOCKER_CONTAINER_NAME):/cs162-student-vm/seed.iso $(SEED_FILE)
 
 .PHONY: dockerstart
 dockerstart:

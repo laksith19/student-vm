@@ -7,4 +7,4 @@ long time. The current builds took ~1hr to complete which is not ideal (but for 
 process directly on the host (~4 mins) or decide to configure at first boot on the students machines - but this could potentially cause more setup issues.  
 
 
-You can get the generated files [here](https://ocf.io/laksith/student-vms).
+You can get the generated files [here](https://ocf.io/laksith/student-vm).

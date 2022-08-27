@@ -59,7 +59,7 @@ runcmd:
     
     # Copy over config files 
     - >
-     git clone --depth=1 https://github.com/nicholasngai/student-vm /run/temp
+     git clone --depth=1 https://github.com/laksith19/student-vm /run/temp
     - rm -rf /home/cs162-student
     - cp -r /run/temp/slash/home/cs162-student/ /home/cs162-student
     - >
